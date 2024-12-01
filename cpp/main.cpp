@@ -50,25 +50,75 @@ int main() {
     vals.push_back("undefined");
     vals.push_back("|");
     vals.push_back("\n");
+    string username;
+    string userpasswd;
     string password;
     string cmd;
     cout << "Welcome to CST Terminal, c++ version.\nThis document is the intellectual property of @Cesium72, @sevinATEnine, and @sevinATEnine-alt\n\n";
+    ifstream config(".cstconf");
+    if(!config) {
+        config.close();
+        cout << "Welcome to cst! It seems like it's your first time! Please enter a username (no spaces): ";
+        cin >> username;
+        cin.ignore(256, '\n');
+        cout << "Welcome, " << username << "! Please enter a password to guard your account (also no spaces): ";
+        cin >> userpasswd;
+        cin.ignore(256, '\n');
+        cout << "Awesome! You're all set up now. If you ever need a list of commands, type 'help'\n";
+        ofstream config(".cstconf");
+        config << username << "\n" << userpasswd;
+        config.close();
+    } else {
+        getline(config,username);
+        getline(config,userpasswd);
+        config.close();
+        cout << "Welcome back, " << username << "!\n";
+    }
     login:
     cout << "Enter password: ";
     getline(cin,password);
-    if(password != "(0d3r$") {
+    if(password != userpasswd) {
         cout << "Invalid \n";
         goto login;
     }
     cout << "Login successful.\n\n";
     command:
-    cout << "CST/YOU-->";
+    cout << "CST/" << username << "-->";
     getline(cin, cmd);
     vector<string> cmdSplit = split(cmd, ' ');
     if(cmdSplit[0] == "help") {
-        cout << "help: prints list of commands\ncreate [filename]: creates or truncates file 'filename'\nalias [name] [value...] creates alias 'name' with value 'value'\necho [text...] returns 'text'\ndrop [filepath]: deletes file 'filepath'\nread [filepath]: reads file of 'filepath'\nquit: closes terminal\nappend [filepath] [text...] appends 'text' to file 'filepath'\nappendl [filepath] [text...] appends 'text' and newline to file 'filepath'";
+        cout << "Note: all relative filepaths are based on the directory of this program.\n\nhelp: prints list of commands\ncreate [filename]: creates or truncates file 'filename'\necho [text...] returns 'text'\ndrop [filepath]: deletes file 'filepath'\nread [filepath]: reads file of 'filepath'\nbash [command]: executes terminal command 'command'\nquit: closes terminal\ndrop-alias [alias]: deletes alias with name 'alias'\nalias [name] [value...]: creates alias of 'name' with value 'value'\nappend [filepath] [text...]: appends 'text' to file 'filepath'\nappendl [filepath] [text...]: appends 'text' and newline to file 'filepath'\nset-pswrd [cur] [new]: changes password to 'new.' current password 'cur' must be specified\nset-name [cur] [new]: changes name to 'new.' current password 'cur' must be specified\nreset [password]: RESETS TERMINAL!!! Password must be specified!";
     } else if(cmdSplit[0] == "quit") {
         return 0;
+    } else if(cmdSplit[0] == "set-pswrd") {
+        if(cmdSplit[1] == userpasswd) {
+            userpasswd = cmdSplit[2];
+            ofstream config(".cstconf");
+            config << username << "\n" << userpasswd;
+            config.close();
+            cout << "Password reset";
+        } else {
+            cerr << "Error 06: Authentication failed.";
+        }
+    } else if(cmdSplit[0] == "set-name") {
+        if(cmdSplit[1] == userpasswd) {
+            username = cmdSplit[2];
+            ofstream config(".cstconf");
+            config << username << "\n" << userpasswd;
+            config.close();
+            cout << "Name reset";
+        } else {
+            cerr << "Error 06: Authentication failed.";
+        }
+    } else if(cmdSplit[0] == "reset") {
+        if(cmdSplit[1] == userpasswd) {
+            string path = ".cstconf";
+            remove(path.c_str());
+            cout << "Terminal reset\n";
+            return 0;
+        } else {
+            cerr << "Error 06: Authentication failed.";
+        }
     } else if(cmdSplit[0] == "bash") {
         string orig = var(vals,names,cmd.substr(5));
         char script[orig.length() + 1];
