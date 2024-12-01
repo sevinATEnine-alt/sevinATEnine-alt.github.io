@@ -5,6 +5,9 @@
 #include <sstream>
 #include <algorithm>
 #include <cstring>
+#include <cctype>
+#include <string>
+#include <regex>
 using namespace std;
 
 vector<string> split(string s, char del) {
@@ -41,6 +44,39 @@ string var(vector<string> valsV, vector<string> namesV, string content) {
     }
     return val;
 }
+
+void delete_line(const char *file_name, int n) { 
+
+    string line;
+    vector<string> vals;
+    vector<string> names;
+    ifstream file(var(vals,names,file_name));
+
+    string out;
+    int iterator = 0;
+
+    if(file) {
+        while(getline(file,line)) {
+            if (iterator != n) {
+                out += (line + "\n");
+            }
+            iterator += 1;
+
+        }
+        file.close();
+    } else {
+        cerr << "Error 02: Unable to access file";
+    }
+
+    file.close();
+
+    ofstream file2(var(vals,names,".notes"));
+    file2 << out;
+    file2.close();
+
+
+} 
+
 int main() {
     vector<string> names;
     names.push_back("");
@@ -82,12 +118,21 @@ int main() {
         goto login;
     }
     cout << "Login successful.\n\n";
+
+    ifstream file(var(vals,names,".notes"));
+    
+    if (!file) {
+        ofstream file2(var(vals,names,".notes"));
+        file2 << "This is an example note!" << "\n";
+        file2.close();
+    }
+
     command:
     cout << "CST/" << username << "-->";
     getline(cin, cmd);
     vector<string> cmdSplit = split(cmd, ' ');
     if(cmdSplit[0] == "help") {
-        cout << "Note: all relative filepaths are based on the directory of this program.\n\nhelp: prints list of commands\ncreate [filename]: creates or truncates file 'filename'\necho [text...] returns 'text'\ndrop [filepath]: deletes file 'filepath'\nread [filepath]: reads file of 'filepath'\nbash [command]: executes terminal command 'command'\nquit: closes terminal\ndrop-alias [alias]: deletes alias with name 'alias'\nalias [name] [value...]: creates alias of 'name' with value 'value'\nappend [filepath] [text...]: appends 'text' to file 'filepath'\nappendl [filepath] [text...]: appends 'text' and newline to file 'filepath'\nset-pswrd [cur] [new]: changes password to 'new.' current password 'cur' must be specified\nset-name [cur] [new]: changes name to 'new.' current password 'cur' must be specified\nreset [password]: RESETS TERMINAL!!! Password must be specified!";
+        cout << "Note: all relative filepaths are based on the directory of this program.\n\nhelp: prints list of commands\ncreate [filename]: creates or truncates file 'filename'\necho [text...] returns 'text'\ndrop [filepath]: deletes file 'filepath'\nnotes: Opens the notes menu\nread [filepath]: reads file of 'filepath'\nbash [command]: executes terminal command 'command'\nquit: closes terminal\ndrop-alias [alias]: deletes alias with name 'alias'\nalias [name] [value...]: creates alias of 'name' with value 'value'\nappend [filepath] [text...]: appends 'text' to file 'filepath'\nappendl [filepath] [text...]: appends 'text' and newline to file 'filepath'\nset-pswrd [cur] [new]: changes password to 'new.' current password 'cur' must be specified\nset-name [cur] [new]: changes name to 'new.' current password 'cur' must be specified\nreset [password]: RESETS TERMINAL!!! Password must be specified!";
     } else if(cmdSplit[0] == "quit") {
         return 0;
     } else if(cmdSplit[0] == "set-pswrd") {
@@ -117,7 +162,7 @@ int main() {
             cout << "Terminal reset\n";
             return 0;
         } else {
-            cerr << "Error 06: Authentication failed.";
+            cerr << "Error 06: Authentication failed. Please run like: reset [password]. ";
         }
     } else if(cmdSplit[0] == "bash") {
         string orig = var(vals,names,cmd.substr(5));
@@ -185,6 +230,97 @@ int main() {
             cout << "File created/truncated successfully.";
         }
         file.close();
+    } else if (cmdSplit[0] == "notes") {
+        string choice;
+        string mod;
+        string deleteLine;
+
+        std::regex reg("^[0-9]{1,10}$");
+
+        string line;
+        ifstream file(var(vals,names,".notes"));
+
+        if (!file) {
+            ofstream file2(var(vals,names,".notes"));
+            file2 << "This is an example note!" << "\n";
+            file2.close();
+        }
+
+        if(file) {
+            int lineNum = 0;
+            while(getline(file,line)) {
+                lineNum++;
+                cout << "[" << lineNum << "] " << line << "\n";
+            }
+            file.close();
+
+            if (lineNum == 0) {
+                cout << "You have no notes.\n";
+            }
+
+            while (true) {
+                cout << "\nWhat would you like to do?\n" <<
+                "[A]dd note\n" <<
+                "[R]emove note\n" <<
+                "[Q]uit notes\n" <<
+                "[L]ist notes\n> ";
+
+                getline(cin, choice);
+            
+                for (auto & c: choice) c = toupper(c);
+
+                if (choice == "A") {
+                    cout << "What note to add?\n> ";
+
+                    getline(cin, mod);
+
+                    cout << mod;
+
+                    ofstream file2(var(vals,names,".notes"), ios::app);
+                    file2 << mod << "\n";
+                    file2.close();
+
+                    cout << "\n";
+                } else if (choice == "R")  {
+                    while (true) {
+                        cout << "Line > ";
+                        getline(cin, deleteLine);
+                        if (regex_match(deleteLine, reg)) {
+                            delete_line(".notes", (stoi(deleteLine)-1));
+                            break;
+                        } else {
+                            cout << "Please enter valid line number\n";
+                        }
+                    }
+
+                } else if (choice == "L") {
+                    ifstream file(var(vals,names,".notes"));
+
+                    lineNum = 0;
+                    while(getline(file,line)) {
+                        lineNum++;
+                        cout << "[" << lineNum << "] " << line << "\n";
+                    }
+                    file.close();
+
+                    if (lineNum == 0) {
+                        cout << "You have no notes.\n";
+                    }
+                } else if (choice == "Q") {
+                    cout << "\n";
+                    break;
+                } else {
+                    cerr << "\nInvalid choice. Please enter either A, R or Q\n";
+                }
+            }
+
+            goto command;
+
+        } else {
+            cerr << "Error 02: Unable to access file";
+        }
+
+        goto command;
     } else {
         cerr << "Error 01: Invalid command";
     }
