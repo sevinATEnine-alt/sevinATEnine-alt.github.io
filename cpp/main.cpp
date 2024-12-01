@@ -8,6 +8,7 @@
 #include <cctype>
 #include <string>
 #include <regex>
+#include <ctime>
 using namespace std;
 
 vector<string> split(string s, char del) {
@@ -90,7 +91,17 @@ int main() {
     string userpasswd;
     string password;
     string cmd;
-    cout << "Welcome to CST Terminal, c++ version.\nThis document is the intellectual property of @Cesium72, @sevinATEnine, and @sevinATEnine-alt\n\n";
+    cout << "Welcome to CST Terminal, c++ version.\nThis document is the intellectual property of @Cesium72, @sevinATEnine, and @sevinATEnine-alt\n";
+
+    time_t timestamp = time(NULL);
+    struct tm datetime = *localtime(&timestamp);
+
+    char output[50];
+
+    // Display the date and time represented by the timestamp
+    strftime(output, 50, "%m/%d/%y %I:%M:%S %p", &datetime);
+    cout << "It is " << output << " server time.\n\n";
+
     ifstream config(".cstconf");
     if(!config) {
         config.close();
@@ -321,6 +332,17 @@ int main() {
         }
 
         goto command;
+    } else if (cmdSplit[0] == "time") {
+        time_t timestamp = time(NULL);
+        struct tm datetime = *localtime(&timestamp);
+
+        char output[50];
+
+        char format[50];
+
+
+        strftime(output, 50, "%m/%d/%y %I:%M:%S %p", &datetime);
+        cout << output;
     } else {
         cerr << "Error 01: Invalid command";
     }
